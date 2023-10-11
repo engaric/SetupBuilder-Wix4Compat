@@ -546,9 +546,16 @@ class WxsFileBuilder extends XmlFileBuilder<Msi> {
      */
     private void addGUI() throws Exception {
         Element wixUiInstalldir = getOrCreateChildById( product, "Property", "WIXUI_INSTALLDIR" );
+        List<String> customUI = task.getCustomUI();
         addAttributeIfNotExists( wixUiInstalldir, "Value", "INSTALLDIR" );
-        getOrCreateChildById( product, "UIRef", "WixUI_ErrorProgressText" ); // https://stackoverflow.com/questions/44844248/wix-progressdlg-not-showing-status-info-properly
-        getOrCreateChildById( product, "UIRef", "WixUI_InstallDir" );
+        if(null==customUI || customUI.size()<1) {
+            getOrCreateChildById( product, "UIRef", "WixUI_ErrorProgressText" ); // https://stackoverflow.com/questions/44844248/wix-progressdlg-not-showing-status-info-properly
+            getOrCreateChildById( product, "UIRef", "WixUI_InstallDir" );
+        } else {
+            for (String uiRef : customUI) {
+                getOrCreateChildById( product, "UIRef", uiRef );
+            }
+        }
 
         boolean isLicense = addLicense( product );
         if( !isLicense ) {

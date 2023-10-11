@@ -177,6 +177,7 @@ public abstract class AbstractBuilder<T extends AbstractTask, S extends Abstract
         if( input != null ) {
             action.setStandardInput( input );
         }
+        action.setEnvironment(task.getEnvironment());
 
         if( output == null ) {
             output = new IndentationOutputStream( System.out );

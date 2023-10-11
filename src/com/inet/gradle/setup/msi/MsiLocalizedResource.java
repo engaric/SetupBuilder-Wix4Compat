@@ -25,172 +25,175 @@ import groovy.lang.Closure;
  */
 public class MsiLocalizedResource implements Serializable {
 
-    private MsiLanguages locale;
+	private MsiLanguages locale;
 
-    private Object       resource;
+	private Object resource;
 
-    private transient SetupBuilder setup;
+	private transient SetupBuilder setup;
 
-    private boolean      overridable;
+	private boolean overridable;
 
-    private File         temporaryDirectory;
+	private File temporaryDirectory;
 
-    /**
-     * Stub Object for localized resources
-     *
-     * @param setup the setup
-     * @param temporaryDirectory the temporary directory of the task to store resources
-     */
-    public MsiLocalizedResource( SetupBuilder setup, File temporaryDirectory ) {
-        this.setup = setup;
-        this.temporaryDirectory = temporaryDirectory;
-    }
+	/**
+	 * Stub Object for localized resources
+	 *
+	 * @param setup the setup
+	 * @param temporaryDirectory the temporary directory of the task to store resources
+	 */
+	public MsiLocalizedResource(SetupBuilder setup, File temporaryDirectory) {
+		this.setup = setup;
+		this.temporaryDirectory = temporaryDirectory;
+	}
 
-    /**
-     * @return the resource as WXL File
-     */
-    public File getResource() {
+	/**
+	 * @return the resource as WXL File
+	 */
+	public File getResource() {
 
-        if( resource == null ) {
-            return null;
-        }
+		if (resource == null) {
+			return null;
+		}
 
-        File input;
-        if( !(resource instanceof File) ) {
-            input = setup.getProject().file( resource );
-        } else {
-            input = (File)resource;
-        }
+		File input;
+		if (!(resource instanceof File)) {
+			input = setup.getProject().file(resource);
+		} else {
+			input = (File) resource;
+		}
 
-        try {
-            File wxlFile = new File( temporaryDirectory, "i18n-" + input.getName() + "." + UUID.randomUUID().toString() + ".wxl" );
-            if( wxlFile.exists() ) {
-                return wxlFile;
-            }
+		try {
+			File wxlFile = new File(temporaryDirectory,	"i18n-" + input.getName() + "." + UUID.randomUUID().toString() + ".wxl");
+			if (wxlFile.exists()) {
+				return wxlFile;
+			}
 
-            wxlFile.getParentFile().mkdirs();
-            Properties props = new Properties();
-            try ( InputStream stream = Files.newInputStream( input.toPath() ) ) {
-                props.load( stream );
-            }
+			wxlFile.getParentFile().mkdirs();
+			Properties props = new Properties();
+			try (InputStream stream = Files.newInputStream(input.toPath())) {
+				props.load(stream);
+			}
 
-            StringBuilder builder = new StringBuilder();
-            builder.append( "<?xml version='1.0'?>\n" );
-            builder.append( "<WixLocalization xmlns='http://schemas.microsoft.com/wix/2006/localization' Codepage='utf-8' " );
+			StringBuilder builder = new StringBuilder();
+			builder.append("<?xml version='1.0'?>\n");
+			builder.append("<WixLocalization xmlns='http://schemas.microsoft.com/wix/2006/localization' Codepage='utf-8' ");
 
-            boolean isDefaultLanguage = locale.getLangID().equalsIgnoreCase( MsiLanguages.getMsiLanguage( setup.getDefaultResourceLanguage() ).getLangID() );
-            boolean overridable = isDefaultLanguage || this.overridable;
-            if( !isDefaultLanguage ) {
-                builder.append( "Culture='" + locale.getCulture() + "'" );
-            }
+			boolean isDefaultLanguage = locale.getLangID().equalsIgnoreCase(MsiLanguages.getMsiLanguage(setup.getDefaultResourceLanguage()).getLangID());
+			boolean overridable = isDefaultLanguage || this.overridable;
+			if (!isDefaultLanguage) {
+				builder.append("Culture='" + locale.getCulture() + "'");
+			}
 
-            builder.append( ">\n" );
+			builder.append(">\n");
 
-            for( Object key : props.keySet() ) {
+			for (Object key : props.keySet()) {
 
-                String value = props.getProperty( (String)key );
-                builder.append( "\t<String Id='" );
-                builder.append( key );
+				String value = props.getProperty((String) key);
+				if (((String)key).startsWith("ui")) {
+					builder.append(value);
+				} else {
+					builder.append("\t<String Id='");
+					builder.append(key);
 
-                if ( overridable ) {
-                    builder.append( "' Overridable='yes" );
-                }
+					if (overridable) {
+						builder.append("' Overridable='yes");
+					}
 
-                builder.append( "'>" );
-                builder.append( value );
-                builder.append( "</String>\n" );
-            }
+					builder.append("'>");
+					builder.append(value);
+					builder.append("</String>\n");
+				}
+			}
 
-            builder.append( "</WixLocalization>" );
-            Files.write( wxlFile.toPath(), builder.toString().getBytes( StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE );
-            return wxlFile;
-        } catch( IOException e ) {
-            return null;
-        }
-    }
+			builder.append("</WixLocalization>");
+			Files.write(wxlFile.toPath(), builder.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+			return wxlFile;
+		} catch (IOException e) {
+			return null;
+		}
+	}
 
-    /**
-     * @return the locale
-     */
-    public MsiLanguages getLocale() {
-        return locale;
-    }
+	/**
+	 * @return the locale
+	 */
+	public MsiLanguages getLocale() {
+		return locale;
+	}
 
-    /**
-     * @param locale the locale to set
-     */
-    public void setLocale( String locale ) {
-        this.locale = MsiLanguages.getMsiLanguage( locale );
-    }
+	/**
+	 * @param locale the locale to set
+	 */
+	public void setLocale(String locale) {
+		this.locale = MsiLanguages.getMsiLanguage(locale);
+	}
 
-    /**
-     * @param resource the resource to set
-     */
-    public void setResource( Object resource ) {
-        this.resource = resource;
-    }
+	/**
+	 * @param resource the resource to set
+	 */
+	public void setResource(Object resource) {
+		this.resource = resource;
+	}
 
-    /**
-     * @return the overrideable
-     */
-    public boolean isOverridable() {
-        return overridable;
-    }
+	/**
+	 * @return the overrideable
+	 */
+	public boolean isOverridable() {
+		return overridable;
+	}
 
-    /**
-     * @param overrideable the overrideable to set
-     */
-    public void setOverridable( boolean overrideable ) {
-        this.overridable = overrideable;
-    }
+	/**
+	 * @param overrideable the overrideable to set
+	 */
+	public void setOverridable(boolean overrideable) {
+		this.overridable = overrideable;
+	}
 
-    /**
-     * Return the localized file for a specific locale
-     *
-     * @param list from which to receive the resource
-     * @param locale for which to get the file
-     * @return localized file
-     */
-    public static File getLocalizedResourceFile( List<MsiLocalizedResource> list, String locale ) {
+	/**
+	 * Return the localized file for a specific locale
+	 *
+	 * @param list   from which to receive the resource
+	 * @param locale for which to get the file
+	 * @return localized file
+	 */
+	public static File getLocalizedResourceFile(List<MsiLocalizedResource> list, String locale) {
 
-        for( MsiLocalizedResource res : list ) {
-            if( res.locale.getLangID().equalsIgnoreCase( locale ) ) {
-                return res.getResource();
-            }
-        }
+		for (MsiLocalizedResource res : list) {
+			if (res.locale.getLangID().equalsIgnoreCase(locale)) {
+				return res.getResource();
+			}
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    /**
-     * Set a localized file
-     *
-     * @param parent the setup builder
-     * @param temporaryDirectory the temporary directory to put the resource is
-     * @param holder the list to add the entry to
-     * @param resource file file or closure
-     */
-    public static void addLocalizedResource( SetupBuilder parent, File temporaryDirectory, List<MsiLocalizedResource> holder, Object resource ) {
+	/**
+	 * Set a localized file
+	 *
+	 * @param parent             the setup builder
+	 * @param temporaryDirectory the temporary directory to put the resource is
+	 * @param holder             the list to add the entry to
+	 * @param resource           file file or closure
+	 */
+	public static void addLocalizedResource(SetupBuilder parent, File temporaryDirectory, List<MsiLocalizedResource> holder, Object resource) {
 
-        MsiLocalizedResource res = new MsiLocalizedResource( parent, temporaryDirectory );
-        if( resource instanceof Closure<?> ) {
-            res = ConfigureUtil.configure( (Closure<?>)resource, res );
-        } else {
-            res.setLocale( parent.getDefaultResourceLanguage() );
-            res.setResource( resource );
-        }
+		MsiLocalizedResource res = new MsiLocalizedResource(parent, temporaryDirectory);
+		if (resource instanceof Closure<?>) {
+			res = ConfigureUtil.configure((Closure<?>) resource, res);
+		} else {
+			res.setLocale(parent.getDefaultResourceLanguage());
+			res.setResource(resource);
+		}
 
-        holder.add( res );
-    }
+		holder.add(res);
+	}
 
-
-    /**
-     * Returns the file for a localized license
-     * @param temporaryDirectory the directory
-     * @param lang the language
-     * @return the localized license file
-     */
-    public static File localizedRtfFile( File temporaryDirectory, MsiLanguages lang ) {
-        return new File( temporaryDirectory, "i18n/" + "license-" + lang.getCulture().replaceAll( "[^a-zA-Z0-9]", "_" ) + ".rtf" );
-    }
+	/**
+	 * Returns the file for a localized license
+	 * @param temporaryDirectory the directory
+	 * @param lang               the language
+	 * @return the localized license file
+	 */
+	public static File localizedRtfFile(File temporaryDirectory, MsiLanguages lang) {
+		return new File(temporaryDirectory, "i18n/" + "license-" + lang.getCulture().replaceAll("[^a-zA-Z0-9]", "_") + ".rtf");
+	}
 }

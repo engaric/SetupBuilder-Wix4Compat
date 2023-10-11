@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -367,4 +368,8 @@ public abstract class AbstractTask extends DefaultTask implements SetupSources {
     public void setVersion( String version ) {
         this.version = version;
     }
+
+	public Map<String, ?> getEnvironment() {
+		return null;
+	}
 }

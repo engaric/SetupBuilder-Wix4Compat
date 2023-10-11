@@ -212,7 +212,9 @@ class MsiBuilder extends AbstractBuilder<Msi,SetupBuilder> {
         parameters.add( "WixUtilExtension" );
         parameters.add( "-out" );
         parameters.add( out.getAbsolutePath() );
-        parameters.add( "-spdb" );
+        if(task.suppressPatchDatabase()) {
+        	parameters.add( "-spdb" );
+        }
         parameters.add( "-cultures:" + language.getCulture() + ";neutral" );
 
         // Add locations

@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -74,9 +76,15 @@ public class Msi extends AbstractSetupTask {
 
     private List<MsiLocalizedResource> i18n               = new ArrayList<>();
 
-    private List<File>                 externals = new ArrayList<>();
+    private List<File>                 externals          = new ArrayList<>();
+    
+    private List<String>               customUI           = new ArrayList<>();
 
     private boolean                    skipValidation = false;
+
+	private boolean                    suppressPatchDatabase = true;
+
+	private Map<String, Object> environment;
 
     /**
      * Create a new instance.
@@ -602,6 +610,28 @@ public class Msi extends AbstractSetupTask {
     public List<String> getWixExtensions() {
         return wixextensions;
     }
+    
+    /**
+     * Get the list of custom UIRef's.
+     *
+     * @return the list
+     */
+    public List<String> getCustomUI() {
+    	return customUI;
+    }
+    
+    /**
+     * Sets list of custom UIRef;s
+     * @param UIRef's
+     * @return this Msi instance
+     */
+    public Msi setCustomUI(Iterable<String> uiRefs) {
+        this.customUI.clear();
+        for (String uiRef : uiRefs) {
+            this.customUI.add(uiRef);
+        }
+        return this;
+    }
 
     /**
      * Returns if the skipValidation is requested
@@ -618,5 +648,52 @@ public class Msi extends AbstractSetupTask {
      */
     public void setSkipValidation( boolean skipValidation ) {
         this.skipValidation = skipValidation;
+    }
+
+    /**
+     * Whether to add the suppress database creation command line parameter to light 
+     * 
+     * @return patch database suppression status
+     */
+	public boolean suppressPatchDatabase() {
+		return suppressPatchDatabase ;
+	}
+	
+	 /**
+     * Set that the suppressPatchDatabase is requested
+     * @param suppressPatchDatabase the suppressPatchDatabase to set
+     */
+    public void setSuppressPatchDatabase( boolean suppressPatchDatabase ) {
+        this.suppressPatchDatabase = suppressPatchDatabase;
+    }
+    
+    public synchronized Map<String, Object> getEnvironment() {
+        if (environment == null) {
+            setNewEnvironment(getInheritableEnvironment());
+        }
+        return environment;
+    }
+
+    private void setNewEnvironment(Map<String, ?> inheritableEnvironment) {
+    	Map<String, Object> newMap = new HashMap<String, Object>(); 
+    	newMap.putAll(inheritableEnvironment); 
+		environment = newMap;
+	}
+
+	protected Map<String, ?> getInheritableEnvironment() {
+        return System.getenv();
+    }
+
+
+    public void setEnvironment(Map<String, ?> map) {
+    	getEnvironment().putAll(map);
+    }
+
+    public void environment(String name, Object value) {
+        getEnvironment().put(name, value);
+    }
+
+    public void environment(Map<String, ?> environmentVariables) {
+        getEnvironment().putAll(environmentVariables);
     }
 }
